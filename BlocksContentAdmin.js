@@ -51,5 +51,5 @@ $(function(){
 
 $(window).load(function(){
     // hide select
-    $(".Inputfield_pwbc_blocks_select select.asmSelect").hide();
+    //$(".Inputfield_pwbc_blocks_select select.asmSelect").hide();
 });
