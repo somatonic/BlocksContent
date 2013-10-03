@@ -28,7 +28,7 @@ class BlocksContent extends WireData implements Module {
 
             // The module'ss title, typically a little more descriptive than the class name
             'title' => 'Blocks Content',
-            'version' => 1,
+            'version' => 2,
             'summary' => 'An example module used for demonstration purposes.',
             'singular' => true,
             'autoload' => true,
