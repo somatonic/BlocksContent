@@ -281,6 +281,7 @@ _END;
             $f->type = $modules->get("FieldtypePage");
             $f->tags = "blocks";
             $f->label = "Create Blocks";
+            $f->labelFieldName = "title";
             $f->name = self::blocksPageSelect;
             $f->derefAsPage = FieldtypePage::derefAsPageArray;
             $f->allowUnpub = 1;
