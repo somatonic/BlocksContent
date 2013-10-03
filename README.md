@@ -19,7 +19,7 @@ http://modules.processwire.com/modules/fredi/
 1. Install Module *Blocks Content*: will also install *Process Blocks Content*
 2. The module also creates a new template *pwbc_blocks_parent*, that is used to create the remote parent page in the admin for storing the blocks as children. Use the family children setting to limit creating blocks using your block templates you going to create.
 3. The module also creates a new page field *pwbc_blocks_select*. This is used to manage and create the blocks in the admin. Add this field to templates you want to create blocks for. It has a special custom php code. Leave as is, but you can change the label for example.
-4. Create some block templates. Do this with a prefix *block_*. It will automaticly recognize them and set the template file (php) to be in /site/templates/blocks/.. Create the template file in there using the same name. i.e. if you create a *block_image-text* you create the partial template file /site/templates/blocks/block_image-text.php
+4. Create some block templates. Do this with a prefix *block_*. It will automaticly recognize them and set the template file (php) to be in /site/templates/blocks/.. Create the template file in there using the same name. i.e. if you create a *block_image-text* you create the partial template file /site/templates/blocks/block_image-text.php. Also set the family setting to not allow children, as this will also hide the children tab on editing views.
 5. As mentioned earlier: Use the family children setting of the *pwbc_blocks_parent* template to limit creating blocks using your block templates.
 
 ## Template code
@@ -66,6 +66,12 @@ Here is an example block template code I used:
 
 Now when you create or edit a page, you'll have an empty "Create Blocks" field with a "+ Add new block" link. Create new blocks and publish them, after closing the modal, the newly created block will appear in the ASM select. Save the page and view it on the front-end. Have fun.
 
-When removing a block from the ASM select and saving the page the block will get deleted. Sorting the blocks in front-end will sort them in the ASM select. Deleting is currently not possible from the front-end. Also there seems to be and issue with deleting blocks in the backend when using the modal "Move to trash" button you see at the bottom.
+Create as many block templates, text-image, repeater for link-lists, videos with text etc.
 
+When clicking on the label of a block entry in the ASM select, you can open the modal for editing. 
 
+Sorting the blocks in front-end will sort them in the ASM select and the other way around.
+
+When removing a block from the ASM select and saving the page the block will get deleted. Deleting is currently not possible from the front-end. 
+
+Also there seems to be an issue with deleting blocks in the backend when using the modal "Move to trash" button you see at the bottom. This is because ASM select widget isn't really yet used like this, apart from the field editing on templates.
