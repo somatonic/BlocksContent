@@ -66,3 +66,6 @@ Here is an example block template code I used:
 
 Now when you create or edit a page, you'll have an empty "Create Blocks" field with a "+ Add new block" link. Create new blocks and publish them, after closing the modal, the newly created block will appear in the ASM select. Save the page and view it on the front-end. Have fun.
 
+When removing a block from the ASM select and saving the page the block will get deleted. Sorting the blocks in front-end will sort them in the ASM select. Deleting is currently not possible from the front-end. Also there seems to be and issue with deleting blocks in the backend when using the modal "Move to trash" button you see at the bottom.
+
+
