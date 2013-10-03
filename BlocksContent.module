@@ -1,0 +1,318 @@
+<?php
+
+/**
+ * Content Blocks 
+ * @author Soma <philipp@urlich.ch> 
+ * 
+ * ProcessWire 2.x
+ * Copyright (C) 2010 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+class BlocksContent extends WireData implements Module {
+
+    
+    /**
+     * getModuleInfo is a module required by all modules to tell ProcessWire about them
+     *
+     * @return array
+     *
+     */
+    public static function getModuleInfo() {
+
+        return array(
+
+            // The module'ss title, typically a little more descriptive than the class name
+            'title' => 'Blocks Content',
+            'version' => 1,
+            'summary' => 'An example module used for demonstration purposes.',
+            'singular' => true,
+            'autoload' => true,
+            'author' => 'Soma',
+            'installs' => array("ProcessBlocksContent")
+            );
+    }
+    
+    const blocksParentTemplate = "pwbc_blocks_parent"; // template for parents in admin
+    const blocksPageSelect = "pwbc_blocks_select"; // field for selecting blocks
+
+    
+    public function __construct(){
+        
+    }
+    
+    /**
+     * Initialize the module
+     *
+     * ProcessWire calls this when the module is loaded. For 'autoload' modules, this will be called
+     * when ProcessWire's API is ready. As a result, this is a good place to attach hooks.
+     *
+     */
+    public function init() {
+        
+        $this->addHookBefore("Page::render", $this, "hookAssignTemplate");
+        
+        if(isset($_GET['it']) && strpos($_GET['it'], ltrim($this->config->urls->admin,"/")) !== false){
+            // we are in admin, attach some hookies to do some magic
+            $this->addHookAfter("ProcessPageEdit::buildForm", $this, "hookPageEdit");
+            $this->addHookBefore("InputfieldAsmSelect::render", $this, "hookPageFieldSetup");
+            $this->addHookAfter("InputfieldPage::render", $this, "hookPageFieldRender");
+        
+            $this->addHookAfter("Pages::saveReady", $this, "hookSaveReady");
+            $this->addHookAfter("Pages::deleteReady", $this, "hookDeleteReady");
+        }
+    }
+    
+    public function hookSaveReady(HookEvent $event) {
+        // sync and delete blocks not added to asm select anymore
+        $page = $event->arguments("page");
+        if(!$page->template->hasField(self::blocksPageSelect)) return;
+        if(!$page->isChanged(self::blocksPageSelect)) return;
+        
+        $blocks_parent = $this->getBlocksParent($page);
+        
+        foreach($blocks_parent->children("include=all") as $block) {
+            if(!$page->get(self::blocksPageSelect)->has($block)){
+                $this->message("Deleted block $block->path");
+                $this->pages->delete($block);
+            }
+        }
+           
+    }
+    
+    public function hookDeleteReady(HookEvent $event) {
+        // delete blocks pages
+        $page = $event->arguments("page");
+        if(!$page->template->hasField(self::blocksPageSelect)) return;
+        
+        // get the parent for the blocks
+        $blocks_parent = $this->getBlocksParent($page);
+        if($blocks_parent){
+            $this->message("Deleted blocks for page $page->path");
+            $this->pages->delete($blocks_parent,true);
+        }
+    }
+    
+    public function hookPageFieldSetup(HookEvent $event) {
+        $field = $event->object;
+        if($field->name != self::blocksPageSelect) return;
+        
+        // make selected options editable via modal
+        $field->setAsmSelectOption('editLink', $this->config->urls->admin . 'page/edit/?id={value}&modal=1');
+    }
+    
+    public function hookPageEdit(HookEvent $event) {
+        
+        $this->modules->get("JqueryFancybox");
+        $this->config->scripts->add($this->config->urls->BlocksContent . "BlocksContentAdmin.js");
+        
+        $this->edited_page = $event->object->getPage();
+        
+        if($this->edited_page->template->hasField(self::blocksPageSelect)){
+            
+            // check if block parent for this page is already existent, or create it
+            $block_parent = $this->getBlocksParent($this->edited_page);
+            
+            if(!$block_parent){
+                $block_parent = new Page();
+                $block_parent->template = $this->templates->get(self::blocksParentTemplate);
+                $processPageName = "blocks-process"; //$this->modules->ProcessBlocksContent::pageName;
+                $block_parent->parent = $this->pages->find("template=admin, name={$processPageName}, include=hidden")->first();
+                $block_parent->title = "blocks_{$this->edited_page->id}";
+                $block_parent->save();
+                $this->message("Added blocks parent page $block_parent->path");
+            }
+            
+            // set the blocks parent for this page being edited
+            // blocks_parent is looked for in custom PHP code for the select_blocks page field
+            // it's magic!
+            $this->edited_page->blocks_parent = $block_parent;
+            
+            $blocks = $block_parent->children('include=all');
+            if(count($blocks)){
+                // add block parents children to the ASM select, so we can use it in admin
+                //$this->edited_page->get(self::blocksPageSelect)->add($blocks);
+            }
+        }
+    }
+    
+    public function hookPageFieldRender(HookEvent $event) {
+        $field = $event->object;
+        if($field->name != self::blocksPageSelect) return;
+        
+        $parent_id = $this->getBlocksParent($this->edited_page)->id;
+        $create_link = "<span class='ui-icon ui-icon-plus'></span><a class='pwbc_add' href='{$this->config->urls->admin}page/add/?parent_id={$parent_id}&iframe&modal=1'>Add new block</a>";
+
+        $event->return .= $create_link;
+    }
+    
+
+    public function renderScript(){
+
+        $scripts = "\n<script src='" . $this->config->urls->JqueryFancybox . "jquery.fancybox-1.2.6.js'></script>";
+        $scripts .= "\n<link rel='stylesheet' href='" . $this->config->urls->JqueryFancybox . "JqueryFancybox.css'></script>";
+        $scripts .= "\n<link rel='stylesheet' href='" . $this->config->urls->BlocksContent . "BlocksContent.css'></script>";
+        $scripts .= "\n<script src='" . $this->config->urls->BlocksContent . "BlocksContent.js'></script>";
+        
+        $config = array(
+            'urls' => array(
+                'root' => $this->config->urls->root,
+                'admin' => $this->config->urls->admin
+                )
+            );
+        $config_json = json_encode($config);
+        $config_script = "\n<script>var config = $config_json;</script>";
+        return $scripts . $config_script;
+    }
+
+
+    public function hookAssignTemplate(HookEvent $event){
+        $page = $event->object;
+        if(strpos($page->template, "block_") !== false){
+            $tpl = wire("config")->paths->templates . "blocks/" . $page->template . ".php";
+            $page->template->filename = $tpl;
+        }
+    }
+    
+    
+    public function getBlocksParent(Page $page){
+        $page = $this->pages->find("name=blocks_{$page->id},include=all")->first();
+        return $page;
+    }
+    
+    
+    public function ___render($options = array()){
+
+        // $this->options = $options;
+
+        // if($this->page->template != 'basic-page') return;
+        $out = '';
+
+        //$select_tpl =  $this->getTemplateSelect($this->options['templates']);
+
+        // get block admin page
+        $page = $this->getBlocksParent($this->page);
+        // $this->block_parent = $page;
+        
+        if($page){
+            
+            // $this->blocks = $page->children("include=hidden,check_access=0");
+            $this->blocks = $this->page->get(self::blocksPageSelect);
+            if ($this->user->isLoggedin()) {
+
+                // parent block admin page
+                $out .= "<span id='block_parent_id' data-pageid='{$page->id}'/>";
+                $out .= "<span id='page_id' data-pageid='{$this->page->id}'/>";
+
+                // csrf token for request validation
+                $out .= "<span id='session_token' data-token-name='{$this->session->CSRF->getTokenName()}'
+                            data-token-value='{$this->session->CSRF->getTokenValue()}'/>";
+
+                foreach ($this->blocks as $b) {
+
+                    $out .= "<div class='pwbc_block cf' id='$b->id'>";
+                    $out .= $this->toolbarMarkup($b);
+                    $out .= "<div class='pwbc_block_content'>" . $b->render() . "</div></div>";
+
+                }
+
+            } else {
+                foreach ($this->blocks as $b) {
+                    $out .= $b->render();
+                }
+            }
+        }
+
+        return  $out;
+    }
+
+
+    // public function ___getTemplateSelect($tpls){
+    //     $select = $this->modules->get("InputfieldSelect");
+    //     $select->attr("class","pwbc_block_template_select");
+    //     foreach($tpls as $tpl){
+    //         $tpl = wire("templates")->get($tpl);
+    //         $select->addOption($tpl->id , $tpl->label ? $tpl->label : $tpl->name, array('class' => 'pwbc_templates_select'));
+    //     }
+    //     $select->attr("value", $this->block->template->id);
+    //     echo $this->block->id;
+    //     return $select;
+    // }
+
+    public function ___toolbarMarkup($block){
+        
+        $fredi = $this->modules->get("Fredi");
+        
+        $this->block = $block;
+        
+        $out = '';
+        $out .= "<ul class='pwbc_toolbar'>";
+        // $out .= "<li>" . $this->getTemplateSelect($this->options['templates'])->render() . "</li>";
+        $out .= "<li>" . ($block->template->label ? $block->template->label : $block->template->name) . "</li>";
+        // $out .= "<li><a class='pwbc_block_edit iframe' href='/processwire/page/edit/?id=$block->id&modal=1&iframe' rel='$block->url'>edit</a></li>";
+        $out .= "<li>" . $fredi->setText("edit")->renderAll($block) . "</li>";
+        if($this->blocks->count > 1) {
+            $out .= "<li><a href='#' class='pwbc_block_up'>up</a></li>";
+            $out .= "<li><a href='#' class='pwbc_block_down'>down</a></li>";
+        }
+        $out .= "</ul>";
+        
+        return $out;
+    }
+
+
+    
+    
+    public function ___install() {
+        $fields = wire("fields");
+        $templates = wire("templates");
+        $modules = wire("modules");
+        
+        if(!$fields->get(self::blocksPageSelect)){
+            $phpcode = <<<_END
+\$parent = \$page->blocks_parent;
+return \$parent->children('include=all');
+_END;
+            $f = new Field();
+            $f->type = $modules->get("FieldtypePage");
+            $f->tags = "blocks";
+            $f->label = "Create Blocks";
+            $f->name = self::blocksPageSelect;
+            $f->derefAsPage = FieldtypePage::derefAsPageArray;
+            $f->allowUnpub = 1;
+            $f->findPagesCode = $phpcode;
+            $f->save();
+            $f->inputfield = "InputfieldAsmSelect";
+            $f->save();
+            $this->message("Added new field {$f->name}");
+            
+        }
+        
+        if(!$templates->get(self::blocksParentTemplate)) {
+            
+            $fg = new Fieldgroup();
+            $fg->name = self::blocksParentTemplate;
+            $fg->add($fields->get('title'));
+            $fg->save();
+            
+            $tpl = new Template();
+            $tpl->name = self::blocksParentTemplate;
+            $tpl->tags = "blocks";
+            $tpl->fieldgroup = $fg;
+            $tpl->save();
+            $this->message("Added new template {$tpl->name}");
+            
+        }
+        
+    }
+    
+    
+    public function ___uninstall() {
+
+        
+    }
+}

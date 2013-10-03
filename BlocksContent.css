@@ -1,0 +1,76 @@
+
+
+div.pwbc_block{
+    position: relative;
+
+}
+div.pwbc_block:hover{
+    -webkit-transition: all 0.5s ;
+    -moz-transition: all 0.5s ;
+    background-color: #e8f6e5;
+}
+
+div.pwbc_block:hover .pwbc_toolbar{
+    box-shadow: 1px 1px 10px #bbb;
+    border-radius: 4px;
+    background-color: #eee;
+    opacity: 1;
+}
+
+
+
+ul.pwbc_toolbar{
+    opacity: 0.2;
+    position: absolute!important;
+    top: -25px;
+    right:10px;
+    height: 25px;
+    display: block;
+    list-style-type: none!important;
+    margin: 0!important;
+    padding: 4px!important;
+    line-height: 20px!important;
+    background-image: linear-gradient(bottom, #EDEDED 0%, #FAFAFA 100%);
+    background-image: -o-linear-gradient(bottom, #EDEDED 0%, #FAFAFA 100%);
+    background-image: -moz-linear-gradient(bottom, #EDEDED 0%, #FAFAFA 100%);
+    background-image: -webkit-linear-gradient(bottom, #EDEDED 0%, #FAFAFA 100%);
+    background-image: -ms-linear-gradient(bottom, #EDEDED 0%, #FAFAFA 100%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, #EDEDED),
+        color-stop(1, #FAFAFA)
+    );
+}
+ul.pwbc_toolbar li{
+    border-right: 1px solid #aaa;
+    float:left;
+    margin: 0!important;
+    padding: 0!important;
+    list-style-type: none!important;
+    padding: 0 5px!important;
+    display: block!important;
+    line-height: 20px!important;
+}
+ul.pwbc_toolbar li:last-child{
+    border-right: 0;
+    }
+ul.pwbc_toolbar li a{
+    color: #aaa!important;
+    margin: 0!important;
+    padding: 0!important;
+    display: block!important;
+    padding: 1px 5px!important;
+    line-height: 20px!important;
+}
+div.pwbc_block ul.pwbc_toolbar li a:hover{
+    background: none!important;
+    color: #2a4d6a!important;
+}
+
+a.pwbc_block_edit{
+    -webkit-transition: all 0.5s ;
+    -moz-transition: all 0.5s ;
+}
