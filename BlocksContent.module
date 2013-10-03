@@ -222,7 +222,7 @@ class BlocksContent extends WireData implements Module {
 
             } else {
                 foreach ($this->blocks as $b) {
-                    $out .= $b->render();
+                    if($b->viewable()) $out .= $b->render();
                 }
             }
         }
@@ -252,6 +252,7 @@ class BlocksContent extends WireData implements Module {
         $out = '';
         $out .= "<ul class='pwbc_toolbar'>";
         // $out .= "<li>" . $this->getTemplateSelect($this->options['templates'])->render() . "</li>";
+        if($block->status >= Page::statusUnpublished) $out .= "<li><small style='color:red'>(unpublished)</small></li>";
         $out .= "<li>" . ($block->template->label ? $block->template->label : $block->template->name) . "</li>";
         // $out .= "<li><a class='pwbc_block_edit iframe' href='/processwire/page/edit/?id=$block->id&modal=1&iframe' rel='$block->url'>edit</a></li>";
         $out .= "<li>" . $fredi->setText("edit")->renderAll($block) . "</li>";
