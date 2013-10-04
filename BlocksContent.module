@@ -75,6 +75,7 @@ class BlocksContent extends WireData implements Module {
         
         $blocks_parent = $this->getBlocksParent($page);
         
+        if(!$blocks_parent) return;
         foreach($blocks_parent->children("include=all") as $block) {
             if(!$page->get(self::blocksPageSelect)->has($block)){
                 $this->message("Deleted block $block->path");
